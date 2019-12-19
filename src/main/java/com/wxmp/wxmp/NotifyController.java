@@ -61,7 +61,7 @@ public class NotifyController {
 //    }
 
 
-    @RequestMapping(value = "/notify", produces = "application/xml; charset=UTF-8", method = RequestMethod.POST)
+    @RequestMapping(value = "/notify", method = RequestMethod.POST)
     @ResponseBody
     public String post(NotifyForm form, HttpServletRequest request) throws IOException {
 
