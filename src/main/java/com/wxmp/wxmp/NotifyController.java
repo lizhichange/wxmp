@@ -56,9 +56,7 @@ public class NotifyController {
         String requestBody = IOUtils.toString(request.getInputStream(), "UTF-8");
         log.info("form:{}", form);
         log.info("postData:{}", requestBody);
-        if (!wxMpService.checkSignature(form.getTimestamp(), form.getNonce(), form.getSignature())) {
-            throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
-        }
+
 
         String encType = form.getEncrypt_type();
         String out = null;
