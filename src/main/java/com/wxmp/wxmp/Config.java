@@ -35,6 +35,7 @@ public class Config {
         Map<String, WxMpConfigStorage> configStorageMap= Maps.newHashMap();
         WxMpDefaultConfigImpl configStorage = new WxMpDefaultConfigImpl();
         configStorage.setToken("EvIYhBs2ZuM0EvjScv2J9Ad2dbIlaZSU");
+        configStorage.setAesKey("lxOjHNlrewtzPEHCBh7boSmq9jlAe7JF5CINVf2a8IZ");
         configStorageMap.put("xxx",configStorage);
         service.setMultiConfigStorages(configStorageMap);
         return service;
