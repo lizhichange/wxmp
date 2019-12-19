@@ -60,12 +60,22 @@ public class NotifyController {
             throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
         }
 
-                String encType = form.getEncrypt_type();
+        String encType = form.getEncrypt_type();
         String out = null;
         if (encType == null) {
             // 明文传输的消息
             WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
             log.debug("\ninMessage：{}", inMessage);
+        }  else if ("aes".equalsIgnoreCase(encType)) {
+            // aes加密的消息
+            WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxMpService.getWxMpConfigStorage(),
+                    form.getTimestamp(), form.getNonce(), form.getMsg_signature());
+            log.debug("\n消息解密后内容为：\n{} ", inMessage.toString());
+            WxMpXmlOutMessage outMessage = null;
+            if (outMessage == null) {
+                return "";
+            }
+            out = outMessage.toEncryptedXml(wxMpService.getWxMpConfigStorage());
         }
 
         log.debug("\n组装回复信息：{}", out);
