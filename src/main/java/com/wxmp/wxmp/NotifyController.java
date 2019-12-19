@@ -23,14 +23,13 @@ import java.nio.charset.StandardCharsets;
  */
 @Controller
 @Slf4j
-@AllArgsConstructor
 public class NotifyController {
 
 
     @Autowired
     WxMpService wxMpService;
 
-    private final WxMpMessageRouter messageRouter;
+
 
     @RequestMapping(value = "/notify", method = RequestMethod.GET)
     @ResponseBody
@@ -101,14 +100,5 @@ public class NotifyController {
 //        return out;
 //    }
 
-    private WxMpXmlOutMessage route(WxMpXmlMessage message) {
-        try {
-            return this.messageRouter.route(message);
-        } catch (Exception e) {
-            log.error("路由消息时出现异常！", e);
-        }
-
-        return null;
-    }
 
 }

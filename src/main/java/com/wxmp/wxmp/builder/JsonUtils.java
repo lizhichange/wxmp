@@ -1,4 +1,4 @@
-package com.fulihui.weixinmp.web.notify.form.builder;
+package com.wxmp.wxmp.builder;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
