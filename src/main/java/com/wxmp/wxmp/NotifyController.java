@@ -1,6 +1,7 @@
 package com.wxmp.wxmp;
 
 
+import com.fulihui.weixinmp.web.notify.form.NotifyForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,8 +20,8 @@ public class NotifyController {
 
     @GetMapping("/notify")
     @PostMapping("/notify")
-    public String xxx(HttpServletRequest request) {
-          log.info("notify:{}",request);
-         return "SUCCESS";
+    public String xxx(NotifyForm form,HttpServletRequest request) {
+          log.info("form:{}",form);
+         return Boolean.TRUE.toString();
     }
 }
