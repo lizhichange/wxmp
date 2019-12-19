@@ -51,55 +51,55 @@ public class NotifyController {
     }
 
 
-//    @RequestMapping(value = "/notify", method = RequestMethod.POST)
-//    @ResponseBody
-//    String doPost(NotifyForm form, HttpServletRequest request) throws IOException {
-//        String postData = IOUtils.toString(request.getInputStream(), "UTF-8");
-//        log.info("form:{}", form);
-//        log.info("postData:{}", postData);
-//        return Boolean.TRUE.toString();
-//    }
-
-
     @RequestMapping(value = "/notify", method = RequestMethod.POST)
     @ResponseBody
-    public String post(NotifyForm form, HttpServletRequest request) throws IOException {
-
-        String requestBody = IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
+    String doPost(NotifyForm form, HttpServletRequest request) throws IOException {
+        String postData = IOUtils.toString(request.getInputStream(), "UTF-8");
         log.info("form:{}", form);
-
-        log.info("\n接收微信请求：requestBody=[\n{}\n] ", requestBody);
-
-        if (!wxMpService.checkSignature(form.getTimestamp(), form.getNonce(), form.getSignature())) {
-            throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
-        }
-
-        String encType = form.getEncrypt_type();
-        String out = null;
-        if (encType == null) {
-            // 明文传输的消息
-            WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
-            WxMpXmlOutMessage outMessage = this.route(inMessage);
-            if (outMessage == null) {
-                return "";
-            }
-            out = outMessage.toXml();
-        } else if ("aes".equalsIgnoreCase(encType)) {
-            // aes加密的消息
-            WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxMpService.getWxMpConfigStorage(),
-                    form.getTimestamp(), form.getNonce(), form.getMsg_signature());
-            log.debug("\n消息解密后内容为：\n{} ", inMessage.toString());
-            WxMpXmlOutMessage outMessage = this.route(inMessage);
-            if (outMessage == null) {
-                return "";
-            }
-
-            out = outMessage.toEncryptedXml(wxMpService.getWxMpConfigStorage());
-        }
-
-        log.debug("\n组装回复信息：{}", out);
-        return out;
+        log.info("postData:{}", postData);
+        return Boolean.TRUE.toString();
     }
+
+
+   // @RequestMapping(value = "/notify", method = RequestMethod.POST)
+   // @ResponseBody
+//    public String post(NotifyForm form, HttpServletRequest request) throws IOException {
+//
+//        String requestBody = IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
+//        log.info("form:{}", form);
+//
+//        log.info("\n接收微信请求：requestBody=[\n{}\n] ", requestBody);
+//
+//        if (!wxMpService.checkSignature(form.getTimestamp(), form.getNonce(), form.getSignature())) {
+//            throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
+//        }
+//
+//        String encType = form.getEncrypt_type();
+//        String out = null;
+//        if (encType == null) {
+//            // 明文传输的消息
+//            WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
+//            WxMpXmlOutMessage outMessage = this.route(inMessage);
+//            if (outMessage == null) {
+//                return "";
+//            }
+//            out = outMessage.toXml();
+//        } else if ("aes".equalsIgnoreCase(encType)) {
+//            // aes加密的消息
+//            WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxMpService.getWxMpConfigStorage(),
+//                    form.getTimestamp(), form.getNonce(), form.getMsg_signature());
+//            log.debug("\n消息解密后内容为：\n{} ", inMessage.toString());
+//            WxMpXmlOutMessage outMessage = this.route(inMessage);
+//            if (outMessage == null) {
+//                return "";
+//            }
+//
+//            out = outMessage.toEncryptedXml(wxMpService.getWxMpConfigStorage());
+//        }
+//
+//        log.debug("\n组装回复信息：{}", out);
+//        return out;
+//    }
 
     private WxMpXmlOutMessage route(WxMpXmlMessage message) {
         try {
