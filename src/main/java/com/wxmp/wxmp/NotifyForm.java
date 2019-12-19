@@ -1,4 +1,4 @@
-package com.fulihui.weixinmp.web.notify.form;
+package com.wxmp.wxmp;
 
 
 import lombok.Data;

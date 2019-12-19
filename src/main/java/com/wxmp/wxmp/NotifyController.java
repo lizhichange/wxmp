@@ -1,26 +1,20 @@
 package com.wxmp.wxmp;
 
 
-import com.fulihui.weixinmp.web.notify.form.NotifyForm;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.mp.api.WxMpMessageRouter;
 import me.chanjar.weixin.mp.api.WxMpService;
-import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
-import me.chanjar.weixin.mp.config.WxMpConfigStorage;
-import me.chanjar.weixin.mp.config.impl.WxMpDefaultConfigImpl;
+import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
+import me.chanjar.weixin.mp.bean.message.WxMpXmlOutMessage;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -28,24 +22,14 @@ import java.util.stream.Collectors;
  */
 @Controller
 @Slf4j
+@AllArgsConstructor
 public class NotifyController {
 
 
     @Autowired
     WxMpService wxMpService;
 
-
-    @Bean
-    public WxMpService wxMpService() {
-        // 代码里 getConfigs()处报错的同学，请注意仔细阅读项目说明，你的IDE需要引入lombok插件！！！！
-        WxMpService service = new WxMpServiceImpl();
-        Map<String, WxMpConfigStorage> configStorageMap= Maps.newHashMap();
-        WxMpDefaultConfigImpl configStorage = new WxMpDefaultConfigImpl();
-        configStorage.setToken("EvIYhBs2ZuM0EvjScv2J9Ad2dbIlaZSU");
-        configStorageMap.put("xxx",configStorage);
-        service.setMultiConfigStorages(configStorageMap);
-        return service;
-    }
+private final     WxMpMessageRouter messageRouter;
 
     @RequestMapping(value = "/notify", method = RequestMethod.GET)
     @ResponseBody
@@ -66,12 +50,71 @@ public class NotifyController {
     }
 
 
-    @RequestMapping(value = "/notify", method = RequestMethod.POST)
+//    @RequestMapping(value = "/notify", method = RequestMethod.POST)
+//    @ResponseBody
+//    String doPost(NotifyForm form, HttpServletRequest request) throws IOException {
+//        String postData = IOUtils.toString(request.getInputStream(), "UTF-8");
+//        log.info("form:{}", form);
+//        log.info("postData:{}", postData);
+//        return Boolean.TRUE.toString();
+//    }
+
+
+    @PostMapping(value = "/notify",produces = "application/xml; charset=UTF-8")
     @ResponseBody
-    String doPost(NotifyForm form, HttpServletRequest request) throws IOException {
-        String postData = IOUtils.toString(request.getInputStream(), "UTF-8");
-        log.info("form:{}", form);
-        log.info("postData:{}", postData);
-        return Boolean.TRUE.toString();
+    public String post(
+                       @RequestBody String requestBody,
+                       @RequestParam("signature") String signature,
+                       @RequestParam("timestamp") String timestamp,
+                       @RequestParam("nonce") String nonce,
+                       @RequestParam("openid") String openid,
+                       @RequestParam(name = "encrypt_type", required = false) String encType,
+                       @RequestParam(name = "msg_signature", required = false) String msgSignature) {
+        log.info("\n接收微信请求：[openid=[{}], [signature=[{}], encType=[{}], msgSignature=[{}],"
+                        + " timestamp=[{}], nonce=[{}], requestBody=[\n{}\n] ",
+                openid, signature, encType, msgSignature, timestamp, nonce, requestBody);
+
+
+
+        if (!wxMpService.checkSignature(timestamp, nonce, signature)) {
+            throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
+        }
+
+        String out = null;
+        if (encType == null) {
+            // 明文传输的消息
+            WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
+            WxMpXmlOutMessage outMessage = this.route(inMessage);
+            if (outMessage == null) {
+                return "";
+            }
+
+            out = outMessage.toXml();
+        } else if ("aes".equalsIgnoreCase(encType)) {
+            // aes加密的消息
+            WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxMpService.getWxMpConfigStorage(),
+                    timestamp, nonce, msgSignature);
+            log.debug("\n消息解密后内容为：\n{} ", inMessage.toString());
+            WxMpXmlOutMessage outMessage = this.route(inMessage);
+            if (outMessage == null) {
+                return "";
+            }
+
+            out = outMessage.toEncryptedXml(wxMpService.getWxMpConfigStorage());
+        }
+
+        log.debug("\n组装回复信息：{}", out);
+        return out;
     }
+
+    private WxMpXmlOutMessage route(WxMpXmlMessage message) {
+        try {
+            return this.messageRouter.route(message);
+        } catch (Exception e) {
+            log.error("路由消息时出现异常！", e);
+        }
+
+        return null;
+    }
+
 }
