@@ -3,6 +3,7 @@ package com.wxmp.wxmp;
 
 import lombok.Data;
 import lombok.ToString;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.Serializable;
 
@@ -24,6 +25,8 @@ public class NotifyForm implements Serializable {
     private String            echostr;
     /** 消息密文 */
     private String            msg_signature;
+
+    private String encrypt_type;
 
 
  }
