@@ -60,7 +60,7 @@ private final     WxMpMessageRouter messageRouter;
 //    }
 
 
-    @PostMapping(value = "/notify",produces = "application/xml; charset=UTF-8")
+    @RequestMapping(value = "/notify",produces = "application/xml; charset=UTF-8", method = RequestMethod.POST)
     @ResponseBody
     public String post(
                        @RequestBody String requestBody,
