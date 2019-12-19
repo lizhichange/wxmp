@@ -53,11 +53,25 @@ public class NotifyController {
     @RequestMapping(value = "/notify", method = RequestMethod.POST)
     @ResponseBody
     String doPost(NotifyForm form, HttpServletRequest request) throws IOException {
-        String postData = IOUtils.toString(request.getInputStream(), "UTF-8");
+        String requestBody = IOUtils.toString(request.getInputStream(), "UTF-8");
         log.info("form:{}", form);
-        log.info("postData:{}", postData);
-        return Boolean.TRUE.toString();
+        log.info("postData:{}", requestBody);
+        if (!wxMpService.checkSignature(form.getTimestamp(), form.getNonce(), form.getSignature())) {
+            throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
+        }
+
+                String encType = form.getEncrypt_type();
+        String out = null;
+        if (encType == null) {
+            // 明文传输的消息
+            WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
+            log.debug("\ninMessage：{}", inMessage);
+        }
+
+        log.debug("\n组装回复信息：{}", out);
+        return out;
     }
+
 
 
    // @RequestMapping(value = "/notify", method = RequestMethod.POST)
