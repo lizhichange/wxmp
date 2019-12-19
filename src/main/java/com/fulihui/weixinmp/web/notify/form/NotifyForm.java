@@ -26,7 +26,4 @@ public class NotifyForm implements Serializable {
     private String            msg_signature;
 
 
-
-
-
  }

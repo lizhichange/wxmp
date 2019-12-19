@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 public class NotifyController {
 
 
-    @GetMapping("/notify")
     @PostMapping("/notify")
     public String xxx(NotifyForm form,HttpServletRequest request) {
           log.info("form:{}",form);
