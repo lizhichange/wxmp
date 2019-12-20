@@ -1,7 +1,7 @@
-package com.wxmp.wxmp;
+package com.wxmp.wxmp.config;
 
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import com.wxmp.wxmp.dal.WeChatConfig;
 import com.wxmp.wxmp.factory.ConfigFactory;
 import com.wxmp.wxmp.handler.*;
@@ -12,13 +12,14 @@ import me.chanjar.weixin.mp.api.WxMpQrcodeService;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.api.impl.WxMpQrcodeServiceImpl;
 import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
-import me.chanjar.weixin.mp.config.WxMpConfigStorage;
 import me.chanjar.weixin.mp.config.impl.WxMpDefaultConfigImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static me.chanjar.weixin.common.api.WxConsts.EventType.SUBSCRIBE;
 import static me.chanjar.weixin.common.api.WxConsts.EventType.UNSUBSCRIBE;
@@ -31,7 +32,11 @@ import static me.chanjar.weixin.mp.constant.WxMpEventConstants.POI_CHECK_NOTIFY;
  */
 @Configuration
 @AllArgsConstructor
-public class Config {
+public class WxConfig {
+
+    @Autowired
+    ConfigFactory configFactory;
+
 
     private final LogHandler logHandler;
     private final NullHandler nullHandler;
@@ -43,8 +48,6 @@ public class Config {
     private final UnsubscribeHandler unsubscribeHandler;
     private final SubscribeHandler subscribeHandler;
     private final ScanHandler scanHandler;
-
-
 
 
     @Bean
@@ -88,31 +91,44 @@ public class Config {
 
         return newRouter;
     }
-    @Autowired
-    ConfigFactory configFactory;
+
 
     @Bean
     public WxMpService wxMpService() {
-        // 代码里 getConfigs()处报错的同学，请注意仔细阅读项目说明，你的IDE需要引入lombok插件！！！！
-        WxMpService service = new WxMpServiceImpl();
-        Map<String, WxMpConfigStorage> configStorageMap= Maps.newHashMap();
-        WxMpDefaultConfigImpl configStorage = new WxMpDefaultConfigImpl();
 
         WeChatConfig weChatConfig = configFactory.getWeChatConfig();
-        configStorage.setToken(weChatConfig.getToken());
-        configStorage.setAesKey(weChatConfig.getEncodingAesKey());
-        configStorage.setAppId(weChatConfig.getAppId());
-        configStorage.setSecret(weChatConfig.getAppSecret());
-        configStorageMap.put(weChatConfig.getAppId(),configStorage);
-        service.setMultiConfigStorages(configStorageMap);
-        return service;
-    }
-    @Bean
-    public WxMpQrcodeService wxMpQrcodeService(WxMpService wxMpService){
-        WxMpQrcodeService service=new WxMpQrcodeServiceImpl(wxMpService);
+        WxMpProperties wxMpProperties = new WxMpProperties();
+
+        WxMpProperties.MpConfig mpConfig = new WxMpProperties.MpConfig();
+        mpConfig.setAppId(weChatConfig.getAppId());
+        mpConfig.setSecret(weChatConfig.getAppSecret());
+        mpConfig.setToken(weChatConfig.getToken());
+        mpConfig.setAesKey(weChatConfig.getEncodingAesKey());
+        wxMpProperties.setConfigs(Lists.newArrayList(mpConfig));
+
+        List<WxMpProperties.MpConfig> configs = wxMpProperties.getConfigs();
+        if (configs == null) {
+            throw new RuntimeException("大哥，拜托先看下项目首页的说明（readme文件），添加下相关配置，注意别配错了！");
+        }
+
+        WxMpService service = new WxMpServiceImpl();
+
+        Stream<WxMpProperties.MpConfig> stream = configs.stream();
+        service.setMultiConfigStorages(stream.map(a -> {
+            WxMpDefaultConfigImpl config = new WxMpDefaultConfigImpl();
+            config.setAppId(a.getAppId());
+            config.setSecret(a.getSecret());
+            config.setToken(a.getToken());
+            config.setAesKey(a.getAesKey());
+            return config;
+        }).collect(Collectors.toMap(WxMpDefaultConfigImpl::getAppId, a -> a, (o, n) -> o)));
         return service;
     }
 
+    @Bean
+    public WxMpQrcodeService wxMpQrcodeService(WxMpService wxMpService) {
+        return new WxMpQrcodeServiceImpl(wxMpService);
+    }
 
 
 }
