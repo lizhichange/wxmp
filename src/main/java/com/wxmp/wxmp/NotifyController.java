@@ -1,7 +1,6 @@
 package com.wxmp.wxmp;
 
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.api.WxMpMessageRouter;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -11,7 +10,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -28,6 +29,8 @@ public class NotifyController {
 
     @Autowired
     WxMpService wxMpService;
+    @Autowired
+    WxMpMessageRouter messageRouter;
 
 
 
@@ -53,23 +56,25 @@ public class NotifyController {
     @RequestMapping(value = "/notify", method = RequestMethod.POST)
     @ResponseBody
     String doPost(NotifyForm form, HttpServletRequest request) throws IOException {
-        String requestBody = IOUtils.toString(request.getInputStream(), "UTF-8");
+        String requestBody = IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
         log.info("form:{}", form);
         log.info("postData:{}", requestBody);
-
-
         String encType = form.getEncrypt_type();
         String out = null;
         if (encType == null) {
             // 明文传输的消息
             WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
-            log.debug("\ninMessage：{}", inMessage);
-        }  else if ("aes".equalsIgnoreCase(encType)) {
+            WxMpXmlOutMessage outMessage = this.route(inMessage);
+            if (outMessage == null) {
+                return "";
+            }
+            out = outMessage.toXml();
+        } else if ("aes".equalsIgnoreCase(encType)) {
             // aes加密的消息
             WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxMpService.getWxMpConfigStorage(),
                     form.getTimestamp(), form.getNonce(), form.getMsg_signature());
             log.debug("\n消息解密后内容为：\n{} ", inMessage.toString());
-            WxMpXmlOutMessage outMessage = null;
+            WxMpXmlOutMessage outMessage = this.route(inMessage);
             if (outMessage == null) {
                 return "";
             }
@@ -78,49 +83,23 @@ public class NotifyController {
 
         log.debug("\n组装回复信息：{}", out);
         return out;
+
+    }
+    private WxMpXmlOutMessage route(WxMpXmlMessage message) {
+        try {
+            return this.messageRouter.route(message);
+        } catch (Exception e) {
+            log.error("路由消息时出现异常！", e);
+        }
+        return null;
     }
 
+    public static void main(String[] args) {
+        String requestBody="<xml><URL><![CDATA[wx.wljun.cn/api/notify]]></URL><ToUserName><![CDATA[send404]]></ToUserName><FromUserName><![CDATA[adf]]></FromUserName><CreateTime>1576752387</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA[2222]]></Content><MsgId>22222222</MsgId></xml>";
+        WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
+        System.out.println(inMessage);
+    }
 
-
-   // @RequestMapping(value = "/notify", method = RequestMethod.POST)
-   // @ResponseBody
-//    public String post(NotifyForm form, HttpServletRequest request) throws IOException {
-//
-//        String requestBody = IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
-//        log.info("form:{}", form);
-//
-//        log.info("\n接收微信请求：requestBody=[\n{}\n] ", requestBody);
-//
-//        if (!wxMpService.checkSignature(form.getTimestamp(), form.getNonce(), form.getSignature())) {
-//            throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
-//        }
-//
-//        String encType = form.getEncrypt_type();
-//        String out = null;
-//        if (encType == null) {
-//            // 明文传输的消息
-//            WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
-//            WxMpXmlOutMessage outMessage = this.route(inMessage);
-//            if (outMessage == null) {
-//                return "";
-//            }
-//            out = outMessage.toXml();
-//        } else if ("aes".equalsIgnoreCase(encType)) {
-//            // aes加密的消息
-//            WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxMpService.getWxMpConfigStorage(),
-//                    form.getTimestamp(), form.getNonce(), form.getMsg_signature());
-//            log.debug("\n消息解密后内容为：\n{} ", inMessage.toString());
-//            WxMpXmlOutMessage outMessage = this.route(inMessage);
-//            if (outMessage == null) {
-//                return "";
-//            }
-//
-//            out = outMessage.toEncryptedXml(wxMpService.getWxMpConfigStorage());
-//        }
-//
-//        log.debug("\n组装回复信息：{}", out);
-//        return out;
-//    }
 
 
 }
