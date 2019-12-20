@@ -1,6 +1,7 @@
-package com.wxmp.wxmp;
+package com.wxmp.wxmp.controller;
 
 
+import com.wxmp.wxmp.NotifyForm;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.api.WxMpMessageRouter;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -31,6 +32,7 @@ public class NotifyController {
     WxMpService wxMpService;
     @Autowired
     WxMpMessageRouter messageRouter;
+
 
 
 

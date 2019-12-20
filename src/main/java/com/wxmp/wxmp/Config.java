@@ -8,7 +8,9 @@ import com.wxmp.wxmp.handler.*;
 import lombok.AllArgsConstructor;
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.mp.api.WxMpMessageRouter;
+import me.chanjar.weixin.mp.api.WxMpQrcodeService;
 import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.api.impl.WxMpQrcodeServiceImpl;
 import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
 import me.chanjar.weixin.mp.config.WxMpConfigStorage;
 import me.chanjar.weixin.mp.config.impl.WxMpDefaultConfigImpl;
@@ -105,4 +107,12 @@ public class Config {
         service.setMultiConfigStorages(configStorageMap);
         return service;
     }
+    @Bean
+    public WxMpQrcodeService wxMpQrcodeService(WxMpService wxMpService){
+        WxMpQrcodeService service=new WxMpQrcodeServiceImpl(wxMpService);
+        return service;
+    }
+
+
+
 }
