@@ -81,7 +81,7 @@ public class NotifyController {
             out = outMessage.toEncryptedXml(wxMpService.getWxMpConfigStorage());
         }
 
-        log.debug("\n组装回复信息：{}", out);
+        log.info("\n组装回复信息：{}", out);
         return out;
 
     }
