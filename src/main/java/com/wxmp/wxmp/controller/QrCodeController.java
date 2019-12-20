@@ -30,4 +30,9 @@ public class QrCodeController {
         return file;
     }
 
+    @GetMapping("/qrCodePictureUrl")
+    String qrCodePictureUrl() throws WxErrorException {
+        WxMpQrCodeTicket wxMpQrCodeTicket = wxMpQrcodeService.qrCodeCreateLastTicket(1);
+        return wxMpQrcodeService.qrCodePictureUrl(wxMpQrCodeTicket.getTicket(), true);
+    }
 }
