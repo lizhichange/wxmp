@@ -11,7 +11,7 @@ import java.util.List;
  * @author Binary Wang(https://github.com/binarywang)
  */
 @Data
-class WxMpProperties {
+public class WxMpProperties {
 
     private List<MpConfig> configs;
 
